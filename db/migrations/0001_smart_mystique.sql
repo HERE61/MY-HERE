@@ -1,0 +1,1 @@
+ALTER TABLE "products" ADD COLUMN "product_image_4" text DEFAULT '';
