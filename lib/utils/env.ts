@@ -5,9 +5,11 @@ import { z } from 'zod';
 // variables and their types
 const envSchema = z.object({
   // PORT: z.coerce.number().min(1000),
+  NEON_DATABASE_URL_UNPOOLED: z.string().url(),
   NEON_DATABASE_URL: z.string().url(),
   RESEND_API_KEY: z.string(),
   EMAIL_FROM: z.string().email(),
+  BASE_URL: z.string().url(),
   ENV: z
     .union([z.literal('development'), z.literal('production')])
     .default('development'),
