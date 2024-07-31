@@ -1,7 +1,7 @@
 'use client';
 
-import { ResetPasswordFormSchema } from '../definitions';
-import { Field, FieldError } from '../field';
+import { ResetPasswordValidationSchema } from '../definitions';
+import { Field, FieldErrorAlert } from '../field';
 import { useForm } from '@conform-to/react';
 import { parseWithZod } from '@conform-to/zod';
 import { Label } from '@radix-ui/react-label';
@@ -39,7 +39,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
 
   const [form, fields] = useForm({
     onValidate({ formData }) {
-      return parseWithZod(formData, { schema: ResetPasswordFormSchema });
+      return parseWithZod(formData, { schema: ResetPasswordValidationSchema });
     },
     shouldRevalidate: 'onInput',
     shouldValidate: 'onBlur',
@@ -58,7 +58,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
           <Label htmlFor="password">새로운 비밀번호</Label>
           <PasswordInputConfirm id="password" meta={fields.password} required />
           {fields.password.errors && (
-            <FieldError>{fields.password.errors}</FieldError>
+            <FieldErrorAlert>{fields.password.errors}</FieldErrorAlert>
           )}
         </Field>
         <Field>
@@ -69,7 +69,7 @@ export default function ResetPasswordForm({ token }: { token: string }) {
             required
           />
           {fields.confirmPassword.errors && (
-            <FieldError>{fields.confirmPassword.errors}</FieldError>
+            <FieldErrorAlert>{fields.confirmPassword.errors}</FieldErrorAlert>
           )}
         </Field>
         <SubmitButton className="w-full">비밀번호 변경하기</SubmitButton>

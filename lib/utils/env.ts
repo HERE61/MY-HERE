@@ -10,6 +10,10 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string(),
   EMAIL_FROM: z.string().email(),
   BASE_URL: z.string().url(),
+  KAKAO_CLIENT_ID: z.string(),
+  KAKAO_CLIENT_SECRET: z.string(),
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
   ENV: z
     .union([z.literal('development'), z.literal('production')])
     .default('development'),

@@ -1,18 +1,19 @@
-import type { User } from 'lucia';
+import { type User, generateIdFromEntropySize } from 'lucia';
 import { isWithinExpirationDate } from 'oslo';
 
-import { lucia, verifyPassword } from '@/lib/auth';
+import { lucia } from '@/lib/auth';
+import { hashPassword, verifyPassword } from '@/lib/auth/credentials';
 import { sendEmail } from '@/lib/email';
 
 import ResetPasswordEmailTemplate from '@/components/email/reset-password';
 import { EmailVerificationTemplate } from '@/components/email/verify-email';
 
 import {
-  AuthenticationError,
-  DuplicateError,
-  LoginError,
-  NotFoundError,
-} from './errors';
+  createAccountViaOauth,
+  getAccountByOauthId,
+  updateAccount,
+} from './../data-access/accounts';
+import { AuthenticationError, DuplicateError, NotFoundError } from './errors';
 import {
   changePassword,
   createAccount,
@@ -33,10 +34,12 @@ import {
 export const registerUserUseCase = async (email: string, password: string) => {
   const existingUser = await getUserByEmail(email);
   if (existingUser) {
-    throw new DuplicateError('해당 이메일을 가진 사용자가 이미 존재합니다.');
+    throw new DuplicateError('해당 이메일로 가입한 사용자가 이미 존재합니다.');
   }
-  const user = await createUser(email);
-  await createAccount(user.id, password);
+  const userId = generateIdFromEntropySize(10);
+  const user = await createUser(userId, email);
+  const passwordHash = await hashPassword(password);
+  await createAccount(user.id, passwordHash);
 
   // const config: Config = {
   //   dictionaries: [colors, animals],
@@ -79,7 +82,9 @@ export async function loginUseCase(email: string, password: string) {
   const verifiedUser = await verifyUserUseCase(email, password);
 
   if (!verifiedUser || !verifiedUser.isVerified) {
-    throw new LoginError();
+    throw new AuthenticationError(
+      '이메일 또는 비밀번호가 올바르지 않습니다. 다시 확인해주세요.'
+    );
   }
 
   return { id: verifiedUser.user.id };
@@ -112,7 +117,7 @@ export const verifyPasswordResetTokenUseCase = async (
     passwordResetTokenData.token &&
     isWithinExpirationDate(passwordResetTokenData.expiresAt);
   if (!isValidToken) {
-    throw new AuthenticationError('패스워드 재설정을 할 권한이 없습니다');
+    throw new AuthenticationError('패스워드 재설정을 할 권한이 없습니다.');
   }
   await lucia.invalidateUserSessions(passwordResetTokenData.userId);
   await changePassword(password, passwordResetTokenData.userId);
@@ -128,7 +133,6 @@ export const verifyEmailUseCase = async (user: User, code: string) => {
   }
   await lucia.invalidateUserSessions(user.id);
   await updateUser(user.id, {
-    emailVerified: true,
     emailVerifiedAt: new Date(),
   });
   await deleteEmailVerificationCode(user.id);
@@ -136,7 +140,7 @@ export const verifyEmailUseCase = async (user: User, code: string) => {
 
 export const resendVerificationEmailUseCase = async (user: User) => {
   if (user.emailVerified) {
-    throw new DuplicateError('이미 인증된 메일입니다');
+    throw new DuplicateError('이미 인증된 메일입니다.');
   }
   const code = await generateEmailVerificationCode(user.id, user.email);
   await sendEmail({
@@ -144,4 +148,42 @@ export const resendVerificationEmailUseCase = async (user: User) => {
     subject: '이메일 주소를 인증해주세요',
     body: EmailVerificationTemplate({ code }),
   });
+};
+
+export const signInViaOauthUseCase = async ({
+  email,
+  provider,
+  providerId,
+}: {
+  email: string | null;
+  provider: 'google' | 'kakao';
+  providerId: string;
+}) => {
+  if (!email) {
+    throw new AuthenticationError('카카오 계정에 이메일을 등록해주세요');
+  }
+  const existingUser = await getUserByEmail(email);
+  // 해당 이메일로 사용자가 존재하는 경우
+  if (existingUser) {
+    const hasSignedUpViaOauth = await getAccountByOauthId(provider, providerId);
+    if (!hasSignedUpViaOauth) {
+      // 이메일로 가입한 이력이 있지만 소셜로그인이 처음이면 providerId set
+      await updateAccount(existingUser.id, {
+        [`${provider}ProviderId`]: providerId,
+      });
+    }
+    await updateUser(existingUser.id, {
+      lastLoginAt: new Date(),
+    });
+    return existingUser.id;
+  }
+  // 해당 이메일로 사용자가 없는 경우 oauth 가입 진행
+  const userId = generateIdFromEntropySize(10);
+  await createUser(userId, email);
+  const newAccount = await createAccountViaOauth({
+    userId,
+    provider,
+    oauthId: providerId,
+  });
+  return newAccount.userId;
 };

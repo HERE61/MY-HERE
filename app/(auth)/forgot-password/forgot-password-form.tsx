@@ -1,5 +1,6 @@
 'use client';
 
+import { SubmitErrorAlert } from '../field';
 import Link from 'next/link';
 import { useServerAction } from 'zsa-react';
 
@@ -13,17 +14,14 @@ import { resetPasswordAction } from './actions';
 
 export function ForgotPasswordForm() {
   const { toast } = useToast();
-  const { executeFormAction, isError, error } = useServerAction(
-    resetPasswordAction,
-    {
-      onSuccess: () => {
-        toast({
-          title: '이메일을 확인해주세요',
-          description: '비밀번호 재설정 링크가 발송되었습니다',
-        });
-      },
-    }
-  );
+  const { executeFormAction, error } = useServerAction(resetPasswordAction, {
+    onSuccess: () => {
+      toast({
+        title: '이메일을 확인해주세요',
+        description: '비밀번호 재설정 링크가 발송되었습니다',
+      });
+    },
+  });
 
   return (
     <form className="flex flex-col gap-4" action={executeFormAction}>
@@ -39,10 +37,11 @@ export function ForgotPasswordForm() {
       >
         <Link href="/signup">회원가입하지 않으셨나요? 지금 가입하세요</Link>
       </Button>
-      {isError && (
-        <p className="rounded-lg border bg-[#f1464d] bg-opacity-10 p-2 text-[0.8rem] font-medium text-[#f1464d]">
-          {error.message || error.data}
-        </p>
+      {error && (
+        <SubmitErrorAlert
+          title="비밀번호 초기화에 실패했습니다"
+          description={error.message}
+        />
       )}
       <SubmitButton className="w-full">비밀번호 초기화하기</SubmitButton>
     </form>

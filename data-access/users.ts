@@ -1,12 +1,14 @@
 import { eq } from 'drizzle-orm';
-import { type User, generateIdFromEntropySize } from 'lucia';
+import { type User } from 'lucia';
 
 import { usersTable } from './../db/schema';
 import { db } from '@/db';
 import type { InsertUser } from '@/db/types';
 
-export const createUser = async (email: InsertUser['email']) => {
-  const id = generateIdFromEntropySize(10);
+export const createUser = async (
+  id: InsertUser['id'],
+  email: InsertUser['email']
+) => {
   const [user] = await db.insert(usersTable).values({ id, email }).returning();
   return user;
 };

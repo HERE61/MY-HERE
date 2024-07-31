@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 
-import { hashPassword } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth/credentials';
 
 import { db } from '@/db';
 import { accountsTable } from '@/db/schema';
@@ -8,18 +8,25 @@ import type { InsertAccount } from '@/db/types';
 
 export const createAccount = async (
   userId: InsertAccount['userId'],
-  plainTextPassword: string
+  password: string
 ) => {
-  const passwordHash = await hashPassword(plainTextPassword);
   const [account] = await db
     .insert(accountsTable)
     .values({
       userId,
-      accountType: 'credentials',
-      password: passwordHash,
+      password,
     })
     .returning();
   return account;
+};
+
+export const updateAccount = async (
+  userId: InsertAccount['userId'],
+  updatedUser: Partial<Omit<InsertAccount, 'userId'>>
+) => {
+  db.update(accountsTable)
+    .set(updatedUser)
+    .where(eq(accountsTable.userId, userId));
 };
 
 export const changePassword = async (
@@ -33,19 +40,53 @@ export const changePassword = async (
     })
     .where(eq(accountsTable.userId, userId));
 
-export const createAccountViaGoogle = async (userId: string) => {
+export const getAccountByUserId = async (userId: InsertAccount['userId']) =>
+  db.query.accountsTable.findFirst({
+    where: eq(accountsTable.userId, userId),
+  });
+
+export const integrateAccountViaOauth = async ({
+  userId,
+  provider,
+  oauthId,
+}: {
+  userId: InsertAccount['userId'];
+  provider: 'kakao' | 'google';
+  oauthId: string;
+}) => {
   const [account] = await db
     .insert(accountsTable)
     .values({
       userId,
-      accountType: 'oauth',
-      provider: 'google',
+      [`${provider}ProviderId`]: oauthId,
     })
     .returning();
   return account;
 };
 
-export const getAccountByUserId = async (userId: InsertAccount['userId']) =>
+export const createAccountViaOauth = async ({
+  userId,
+  provider,
+  oauthId,
+}: {
+  userId: InsertAccount['userId'];
+  provider: 'kakao' | 'google';
+  oauthId: string;
+}) => {
+  const [account] = await db
+    .insert(accountsTable)
+    .values({
+      userId,
+      [`${provider}ProviderId`]: oauthId,
+    })
+    .returning();
+  return account;
+};
+
+export const getAccountByOauthId = async (
+  provider: 'kakao' | 'google',
+  oauthId: string
+) =>
   db.query.accountsTable.findFirst({
-    where: eq(accountsTable.userId, userId),
+    where: eq(accountsTable[`${provider}ProviderId`], oauthId),
   });

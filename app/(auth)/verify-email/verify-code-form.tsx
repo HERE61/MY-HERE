@@ -1,9 +1,10 @@
 'use client';
 
 import type { EmailVerifyFormSchema } from '../definitions';
+import { SubmitErrorAlert } from '../field';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { z } from 'zod';
 import { useServerAction } from 'zsa-react';
 
@@ -26,7 +27,7 @@ export default function VerifyCodeForm() {
   const {
     execute: executeVerifyEmail,
     isPending,
-    error,
+    error: verifyError,
   } = useServerAction(verifyEmailAction, {
     onSuccess: () => {
       toast({
@@ -36,33 +37,24 @@ export default function VerifyCodeForm() {
       router.replace('/');
     },
   });
-  const {
-    executeFormAction: executeResendEmailAction,
-    error: resendEmailError,
-  } = useServerAction(resendEmailAction, {
-    onSuccess: () => {
-      toast({
-        title: '이메일을 확인해 주세요',
-        description: '인증코드를 다시 보냈습니다',
-      });
-    },
-  });
-
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: '인증에 실패하였습니다',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } else if (resendEmailError) {
-      toast({
-        title: '인증코드를 보내는데 실패했습니다',
-        description: resendEmailError.message,
-        variant: 'destructive',
-      });
+  const { executeFormAction: executeResendEmailAction } = useServerAction(
+    resendEmailAction,
+    {
+      onSuccess: () => {
+        toast({
+          title: '이메일을 확인해 주세요',
+          description: '인증코드를 다시 보냈습니다',
+        });
+      },
+      onError: (error) => {
+        toast({
+          title: '인증코드를 보내는데 실패했습니다',
+          description: error.err.message,
+          variant: 'destructive',
+        });
+      },
     }
-  }, [error, toast, resendEmailError]);
+  );
 
   const onChangeOTPInput = (
     newValue: z.infer<typeof EmailVerifyFormSchema>['code']
@@ -82,7 +74,7 @@ export default function VerifyCodeForm() {
         }}
         id="verify-email"
       >
-        <div className="flex w-full flex-col items-center gap-2">
+        <div className="flex w-full flex-col items-center gap-3">
           <InputOTP
             id="code"
             name="code"
@@ -103,6 +95,12 @@ export default function VerifyCodeForm() {
               <InputOTPSlot index={5} />
             </InputOTPGroup>
           </InputOTP>
+          {verifyError && (
+            <SubmitErrorAlert
+              title="인증에 실패하였습니다"
+              description={verifyError.message}
+            />
+          )}
         </div>
         <LoadingButton className="mt-4 w-full" loading={isPending}>
           인증하기

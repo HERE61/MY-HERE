@@ -29,9 +29,6 @@ export const assertAuthenticated = async () => {
   if (!user) {
     throw new AuthenticationError('사용자가 인증되지 않았습니다');
   }
-  // if (!user.emailVerified) {
-  //   throw new AuthenticationError('이메일을 인증해야 합니다');
-  // }
   return user;
 };
 

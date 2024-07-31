@@ -1,7 +1,7 @@
 'use client';
 
 import { SignupFormSchema } from '../definitions';
-import { Field, FieldError } from '../field';
+import { Field, FieldErrorAlert, SubmitErrorAlert } from '../field';
 import { useForm } from '@conform-to/react';
 import { parseWithZod } from '@conform-to/zod';
 import Link from 'next/link';
@@ -51,16 +51,23 @@ export default function SignupForm() {
           placeholder="email@example.com"
           required
         />
-        {fields.email.errors && <FieldError>{fields.email.errors}</FieldError>}
+        {fields.email.errors && (
+          <FieldErrorAlert>{fields.email.errors}</FieldErrorAlert>
+        )}
       </Field>
       <Field>
         <Label>비밀번호</Label>
         <PasswordInputConfirm meta={fields.password} required />
         {fields.password.errors && (
-          <FieldError>{fields.password.errors}</FieldError>
+          <FieldErrorAlert>{fields.password.errors}</FieldErrorAlert>
         )}
       </Field>
-      {isSubmitErrorShow && error && <FieldError>{error.message}</FieldError>}
+      {isSubmitErrorShow && error && (
+        <SubmitErrorAlert
+          title="회원가입에 실패했습니다"
+          description={error.message}
+        />
+      )}
       <Button variant="link" size="sm" className="h-auto p-0" asChild>
         <Link href="/login">이미 가입하셨나요?</Link>
       </Button>

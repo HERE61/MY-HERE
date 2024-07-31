@@ -1,5 +1,6 @@
 'use client';
 
+import { SubmitErrorAlert } from '../field';
 import Link from 'next/link';
 import { useServerAction } from 'zsa-react';
 
@@ -40,7 +41,7 @@ export function LoginForm() {
         />
       </div>
 
-      <div className="flex flex-wrap justify-between">
+      <div className="flex flex-wrap justify-between gap-1">
         <Button variant="link" size="sm" className="h-auto p-0" asChild>
           <Link href="/signup">회원이 아니신가요? 지금 가입하세요.</Link>
         </Button>
@@ -48,11 +49,11 @@ export function LoginForm() {
           <Link href="/forgot-password">비밀번호를 잊으셨나요?</Link>
         </Button>
       </div>
-
       {isError && (
-        <p className="rounded-lg border bg-[#f1464d] bg-opacity-10 p-2 text-[0.8rem] font-medium text-[#f1464d]">
-          {error.message}
-        </p>
+        <SubmitErrorAlert
+          title="로그인에 실패하였습니다"
+          description={error.message}
+        />
       )}
       <SubmitButton className="w-full">로그인</SubmitButton>
     </form>

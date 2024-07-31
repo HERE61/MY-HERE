@@ -34,10 +34,10 @@ export default function ForgotPasswordPage() {
         </div>
         <div className="flex flex-col gap-2">
           <Button variant="outline" className="w-full" asChild>
-            <Link href="/login/kakao">카카오로 시작하기</Link>
+            <Link href="api/login/kakao">카카오로 시작하기</Link>
           </Button>
           <Button variant="outline" className="w-full" asChild>
-            <Link href="/login/google">구글로 시작하기</Link>
+            <Link href="api/login/google">구글로 시작하기</Link>
           </Button>
         </div>
       </CardContent>
