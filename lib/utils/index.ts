@@ -1,3 +1,5 @@
+import type { NextApiRequest } from 'next';
+
 type Entries<T> = {
   [K in keyof T]: [K, T[K]];
 }[keyof T][];
@@ -25,13 +27,8 @@ export const ObjectTyped = {
   values: getTypedValues,
 };
 
-export function getUrls(req: NextApiRequest) {
+export function getCurrentHostUrlFromReq(req: NextApiRequest) {
   const host = req.headers['host'];
   const protocol = process.env.VERCEL_URL ? 'https' : 'http';
-  const redirectUri = `${protocol}://${host}/api/auth/callback`;
-  const returnTo = `${protocol}://${host}`;
-  return {
-    redirectUri,
-    returnTo,
-  };
+  return `${protocol}://${host}`;
 }
