@@ -1,5 +1,3 @@
-import type { NextApiRequest } from 'next';
-
 type Entries<T> = {
   [K in keyof T]: [K, T[K]];
 }[keyof T][];
@@ -27,8 +25,8 @@ export const ObjectTyped = {
   values: getTypedValues,
 };
 
-export function getCurrentHostUrlFromReq(req: NextApiRequest) {
-  const host = req.headers['host'];
+export function getCurrentHostUrlFromReq(req: Request) {
+  const host = req.headers.get('X-Forwarded-Host') ?? req.headers.get('Host');
   const protocol = process.env.VERCEL_URL ? 'https' : 'http';
   return `${protocol}://${host}`;
 }

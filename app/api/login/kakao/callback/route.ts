@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 
 import { kakao } from '@/lib/auth/oauth';
 import { setSession } from '@/lib/session';
+import { getCurrentHostUrlFromReq } from '@/lib/utils';
 
 import { KAKAO_API_URL } from '@/constants/api';
 import { signInViaOauthUseCase } from '@/use-cases/user';
@@ -12,6 +13,9 @@ export async function GET(request: Request): Promise<Response> {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
   const storedState = cookies().get('kakao_oauth_state')?.value ?? null;
+  const currentHostUrl = getCurrentHostUrlFromReq(request);
+  console.log('currentHostUrl', currentHostUrl);
+
   if (!code || !state || !storedState || state !== storedState) {
     return new Response(null, {
       status: 400,
